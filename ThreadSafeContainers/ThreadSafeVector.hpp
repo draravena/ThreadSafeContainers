@@ -27,14 +27,20 @@ IMPLEMENT:
 */
 
 namespace datatype {
-	enum class vector_config {
-		ALLOW_FREE_WRITES = 0x00,
-		READ_HEAVY = 0x01,
-		WRITE_HEAVY = 0x02,
-		SNAPSHOT_ENABLED = 0x03,
-		UNLOCKED_READING = 0x04,
-		TRANSACTION_MODE = 0x05,
-
+	enum class vector_config : uint64_t {
+		NO_CONFIG = 0x00,
+		DANGEROUS = 0x01,
+		READ_HEAVY = 0x02,
+		WRITE_HEAVY = 0x04,
+		ENABLE_MUTEX_TIMEOUT = 0x08,
+		SNAPSHOT_ENABLED = 0x10,
+		UNLOCKED_READING = 0x20,
+		TRANSACTION_MODE = 0x40,
+		ONLY_GLOBAL_MUTEX = 0x80,
+		DISABLE_READING_UNTIL_FULL = 0x100,
+		DISABLE_WRITING_UNTIL_FULL = 0x200,
+		ENABLE_STATS = 0x400,
+		ENABLE_SPINLOCK = 0x800
 	};
 	template <typename T>
 	class ThreadSafeVector {
