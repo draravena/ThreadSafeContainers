@@ -27,7 +27,7 @@ IMPLEMENT:
 */
 
 namespace datatype {
-	enum class vector_config : uint64_t {
+	typedef enum class vector_config_t : uint64_t {
 		NO_CONFIG = 0x00,
 		DANGEROUS = 0x01,
 		READ_HEAVY = 0x02,
@@ -40,34 +40,44 @@ namespace datatype {
 		DISABLE_READING_UNTIL_FULL = 0x100,
 		DISABLE_WRITING_UNTIL_FULL = 0x200,
 		ENABLE_STATS = 0x400,
-		ENABLE_SPINLOCK = 0x800
-	};
+		ENABLE_SPINLOCK = 0x800,
+		RESERVE_MAX_SIZE = 0x1000
+	} vector_config_t ;
 	template <typename T>
 	class ThreadSafeVector {
 	public:
-		ThreadSafeVector(uint64_t maxSize, uint64_t elementsPerMutex = UINT64_MAX);
-		ThreadSafeVector();
-		void setMaxSize(uint64_t maxSize, uint64_t elementsPerMutex = UINT64_MAX);
+		// CONSTRUCTORS
+		ThreadSafeVector(uint64_t maxSize, vector_config_t CONFIG = vector_config_t::NO_CONFIG);
+		ThreadSafeVector(vector_config_t CONFIG = vector_config_t::NO_CONFIG);
+		// VECTOR MODIFIER/ACCESSORS
 		bool push_back(T&& item);
 		bool push_back(T& item);
 		bool pop_back();
 		std::optional<T> access(uint64_t index);
 		bool set(uint64_t index, T& val);
 		bool set(uint64_t index, T&& val);
-		void setOperationBias();
 		int64_t move(ThreadSafeVector& destination, bool explicitAll = true);
+		// VECTOR GETTER FUNCTIONS
 		uint64_t size();
 		uint64_t maxSize();
 		uint64_t remaining();
+		// CONFIG GETTER FUNCTIONS
+		bool snapshotEnabled();
+		bool spinlockEnabled();
+		bool statsEnabled();
+		bool readingUnlocked();
+		bool dangerous();
+		bool transaction_mode();
 	private:
+		vector_config_t CONFIG_;
 		// FUNCTIONS
-		void init();
+		void init(uint64_t maxSize = UINT64_MAX, vector_config_t config = vector_config_t::NO_CONFIG);
 		void updateSize();
 		void updateMutexMap();
-		// CONCURRENCY
 		std::mutex& mtx();
-		uint64_t elementsPerMutex_;
-		std::unordered_map<uint64_t, std::shared_ptr<std::mutex>> mutex_map_;
+		// CONCURRENCY
+		uint64_t elementsPerMutex_ = UINT64_MAX;
+		std::unique_ptr<std::unordered_map<uint64_t, std::shared_ptr<std::mutex>>> mutex_map_;
 		std::mutex globalmtx_;
 		// i dunno
 		std::vector<T>& vec();
