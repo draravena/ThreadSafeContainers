@@ -29,5 +29,8 @@
     <ClInclude Include="ThreadSafeVector.ipp">
       <Filter>Implementation Files</Filter>
     </ClInclude>
+    <ClInclude Include="ThreadSafeVectorOperator.ipp">
+      <Filter>Implementation Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
