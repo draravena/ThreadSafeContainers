@@ -84,8 +84,10 @@ namespace datatype {
 		bool set(uint64_t index, T&& val);                     // NO IMPLEMENTATION 
 		int64_t move(ThreadSafeVector& destination, bool explicitAll = true);                     // NO IMPLEMENTATION 
 		// OPERATOR OVERLOADS
+		bool operator==(const ThreadSafeVector& other) const;
 		const T& operator[](uint64_t index) const;
 		T& operator[](uint64_t index);
+		bool strictestEquality(const ThreadSafeVector& other) const;
 		// VECTOR GETTER FUNCTIONS
 		uint64_t size();
 		bool resizeable();

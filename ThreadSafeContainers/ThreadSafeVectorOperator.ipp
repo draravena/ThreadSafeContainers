@@ -4,6 +4,40 @@
 
 namespace datatype {
 	/*
+		EQUATING / [] == [] OPERATOR
+
+	*/
+	template <typename T>
+	bool ThreadSafeVector<T>::operator==(const ThreadSafeVector & other) const {
+		std::lock_guard<std::mutex> thisLock(this->globalmtx_);
+		std::lock_guard<std::mutex> otherLock(other.globalmtx_);
+
+		return this->vector_ == other.vector_;
+	}
+	/*
+		STRICT EQUATION / FUNCTION
+		INCOMPLETE
+	*/
+	template <typename T>
+	bool ThreadSafeVector<T>::strictestEquality(const ThreadSafeVector& other) const {
+		if (!(*this == other)) {
+			return false;
+		}
+		if (this->maxSize_ != other.maxSize_) {
+			return false;
+		}
+		if (this->CONFIG_ != other.CONFIG_) {
+			return false;
+		}
+		if (this->resizeable_ != other.resizeable_) {
+			return false;
+		}
+		if (this->elementsPerMutex_ != other.elementsPerMutex_) {
+			return false;
+		}
+		return true;
+	}
+	/*
 		GETTING / T == [] OPERATOR
 	*/
 	template <typename T>
