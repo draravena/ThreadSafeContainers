@@ -36,7 +36,7 @@ IMPLEMENT:
 namespace datatype {
 	typedef enum class vc_t : uint64_t {
 		// CORE
-		NO_CONFIG = 0x00,
+		NO_CONFIG = 0x00 | 0x01 | 0x10,
 		DANGEROUS = 0x01,
 		READ_HEAVY = 0x02,
 		WRITE_HEAVY = 0x04,
@@ -64,9 +64,12 @@ namespace datatype {
 		return (static_cast<uint64_t>(lhs) & static_cast<uint64_t>(rhs));
 	}
 
+	constexpr vc_t operator|(vc_t lhs, vc_t rhs) {
+		return static_cast<vc_t>((static_cast<uint64_t>(lhs) | static_cast<uint64_t>(rhs)));
+	}
 	
 
-	template <typename T = int>
+	template <typename T>
 	class ThreadSafeVector {
 	public:
 		// CONSTRUCTORS
@@ -81,7 +84,7 @@ namespace datatype {
 		bool set(uint64_t index, T&& val);                     // NO IMPLEMENTATION 
 		int64_t move(ThreadSafeVector& destination, bool explicitAll = true);                     // NO IMPLEMENTATION 
 		// OPERATOR OVERLOADS
-		//const T& operator[](uint64_t index) const;
+		const T& operator[](uint64_t index) const;
 		T& operator[](uint64_t index);
 		// VECTOR GETTER FUNCTIONS
 		uint64_t size();
@@ -98,7 +101,7 @@ namespace datatype {
 		bool transaction_mode();                     // NO IMPLEMENTATION 
 		static uint64_t getTotalRAM();
 		static uint64_t getFreeRAM();
-		
+		std::vector<T> vector_;
 	private:
 		// CONFIG
 		vc_t CONFIG_;
@@ -118,7 +121,7 @@ namespace datatype {
 		// VECTOR
 		std::atomic<uint64_t> maxSize_;
 		std::atomic<uint64_t> size_;
-		std::vector<T> vector_;
+
 		// HELPER FUNCTIONS
 		inline bool isConfigured(vc_t CONFIG) const {
 			return (CONFIG & CONFIG_);
@@ -132,27 +135,40 @@ namespace datatype {
 			}
 		}
 		// OVERLOAD FUNCTIONS
-		
-		T& OVERLOAD_set(uint64_t index);
+
+		T& _SET_OPERATOR_(uint64_t index);
 		template <typename U = T>
 		typename std::enable_if<std::is_default_constructible<U>::value, T&>::type
-		OVERLOAD_condition_set(uint64_t index) {
-			if (isConfigured(vc_t::DISABLE_WRITING_UNTIL_EMPTY) && vector_.size() > 0) {
-				T dummy;
-				return dummy;
-			}
+			_SET_OPERATOR_FALLBACK() {
+			T dummy;
+			return dummy;
 		}
+
 		template <typename U = T>
 		typename std::enable_if<!std::is_default_constructible<U>::value, T&>::type
-		OVERLOAD_condition_set(uint64_t index) {
-			if (isConfigured(vc_t::DISABLE_WRITING_UNTIL_EMPTY) && vector_.size() > 0) {
-				int dummy = 0;
-				return dummy;
-			}
+			_SET_OPERATOR_FALLBACK() {
+			int dummy = 0;
+			return dummy;
+		}
+
+		const T& _GET_OPERATOR_(uint64_t index) const;
+		template <typename U = T>
+		typename std::enable_if<std::is_default_constructible<U>::value, const T&>::type
+			_GET_OPERATOR_FALLBACK() const {
+			T dummy;
+			return dummy;
+		}
+
+		template <typename U = T>
+		typename std::enable_if<!std::is_default_constructible<U>::value, const T&>::type
+			_GET_OPERATOR_FALLBACK() const {
+			int dummy = 0;
+			return dummy;
 		}
 	};
 };
 
 #include "threadSafeVector.ipp"
+#include "ThreadSafeVectorOperator.ipp"
 
 #endif
