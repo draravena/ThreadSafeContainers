@@ -2,12 +2,12 @@
 
 #include "threadSafeVector.hpp"
 
-namespace datatype {	
+namespace datatype {
 	/*
 		EQUATING / [] == [] OPERATOR
 	*/
 	template <typename T>
-	bool ThreadSafeVector<T>::operator==(const ThreadSafeVector & other) const {
+	bool ThreadSafeVector<T>::operator==(const ThreadSafeVector& other) const {
 		std::lock_guard<std::mutex> thisLock(this->globalmtx_);
 		std::lock_guard<std::mutex> otherLock(other.globalmtx_);
 		return this->vector_ == other.vector_;

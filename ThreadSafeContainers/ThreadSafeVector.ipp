@@ -2,7 +2,7 @@
 
 #include "threadSafeVector.hpp"
 #include <iostream> // debug
- 
+
 namespace datatype {
 	template <typename T>
 	ThreadSafeVector<T>::ThreadSafeVector(uint64_t maxSize, vc_t CONFIG) : resizeable_(false), CONFIG_(CONFIG) {
@@ -132,7 +132,7 @@ namespace datatype {
 
 	// GETTERS
 	template <typename T>
-	uint64_t ThreadSafeVector<T>::getTotalRAM() {	
+	uint64_t ThreadSafeVector<T>::getTotalRAM() {
 		MEMORYSTATUSEX msx = getMemStatusEX();
 		return msx.ullTotalPhys;
 	}
@@ -155,7 +155,7 @@ namespace datatype {
 	template <typename T>
 	uint64_t ThreadSafeVector<T>::size() {
 		return size_;
-	}	
+	}
 	template <typename T>
 	uint64_t ThreadSafeVector<T>::maxSize() {
 		return maxSize_;
