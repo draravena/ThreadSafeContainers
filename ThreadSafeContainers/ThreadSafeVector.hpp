@@ -43,20 +43,17 @@ namespace datatype {
 		ENABLE_MUTEX_TIMEOUT = 0x08,
 		ONLY_GLOBAL_MUTEX = 0x10,
 		RESERVE_MAX_SIZE = 0x20,
+
 		// NICHE
 		SNAPSHOT_ENABLED = 0x40,
 		DISABLE_READING_UNTIL_FULL = 0x80,
 		DISABLE_WRITING_UNTIL_EMPTY = 0x100,
 		// OPTIONS
 		RESIZEABLE = 0x200,
-		TRANSACTION_MODE = 0x400, // ?
-		ENABLE_SPINLOCK = 0x800, // ?
+
 		// DEBUG
 		ENABLE_STATS = 0x1000,
 		THROW_EXCEPTIONS = 0x2000
-
-
-
 	} vc_t;
 
 	// Bitwise OR operator
@@ -73,12 +70,19 @@ namespace datatype {
 	class ThreadSafeVector {
 	public:
 		// CONSTRUCTORS
+
 		ThreadSafeVector(uint64_t maxSize = UINT64_MAX, vc_t CONFIG = vc_t::NO_CONFIG);
+
 		ThreadSafeVector(vc_t CONFIG = vc_t::NO_CONFIG);
-		// VECTOR FUNCTIONS
+
+		// VECTOR OPERATIONS
+
 		bool push_back(T&& item);
+
 		bool push_back(T& item);
+
 		bool pop_back(uint64_t count = 1);
+
 		int64_t append(ThreadSafeVector& destination, bool explicitAll = true, vc_t RESIZE_FLAG = vc_t::NO_CONFIG);
 
 		void clear();
@@ -95,11 +99,16 @@ namespace datatype {
 
 		SimdType AVXRegister;
 
+		// EQUALITY
 		bool operator==(const ThreadSafeVector& other) const;
+
+		// GET ELEMENT
 		const T& operator[](uint64_t index) const;
+
+		// MODIFY ELEMENT
 		T& operator[](uint64_t index);
 
-		// AVX Increment (NOT IMPLEMENTED)
+		// AVX Increment (NOT IMPLEMENTED) (PROTOTYPE)
 		template <typename U = T>
 		typename std::enable_if<std::is_integral<U>::value, ThreadSafeVector<T>&>::type
 			operator++(int) {
@@ -109,63 +118,74 @@ namespace datatype {
 		}
 
 		bool strictestEquality(const ThreadSafeVector& other) const;
+
 		// VECTOR GETTER FUNCTIONS
+
 		uint64_t size();
+
 		bool resizeable();
+
 		uint64_t maxSize();
+
 		uint64_t remaining();
+
+
 		// CONFIG SETTER FUNCTIONS
+
 		void setConfig(vc_t CONFIG);
+
 		// CONFIG GETTER FUNCTIONS
+
 		vc_t getConfig();
+
 		static uint64_t getTotalRAM();
+
 		static uint64_t getFreeRAM();
-		std::vector<T> vector_;
+
 	private:
+		/*
+			VARIABLES
+		*/
+
 		// CONFIG
+
 		std::atomic<vc_t> CONFIG_;
 
 		bool resizeable_;
+
+		std::chrono::microseconds timedMutexWaitDuration_;
+
+		// LAZY INITIALIZATION FLAGS
 
 		std::once_flag mutexesInitialized_;
 
 		std::once_flag mutexMapsInitialized_;
 
-		std::chrono::microseconds timedMutexWaitDuration_;
+		// CORE VECTOR
 
-		// FUNCTIONS
-		void init(uint64_t maxSize = UINT64_MAX, vc_t CONFIG = vc_t::NO_CONFIG);
+		std::vector<T> vector_;
 
-		void updateMutexMap();                     // NO IMPLEMENTATION 
+		std::atomic<uint64_t> maxSize_;
 
-		static MEMORYSTATUSEX getMemStatusEX();
+		std::atomic<uint64_t> size_;
 
-		inline std::vector<T>& vec();
-
-		void lazyInitialization();
-
-		void initializeMutexes();
-
-		void initializeMutexMaps();
-
-		T* data();
-
-		// CONCURRENCY
-		uint64_t elementsPerMutex_ = UINT64_MAX;
-
-		std::unique_ptr<std::unordered_map<uint64_t, std::shared_ptr<std::mutex>>> mutex_map_;
-
-		std::unique_ptr<std::unordered_map<uint64_t, std::shared_ptr<std::timed_mutex>>> timed_mutex_map_;
-
+		// GLOBAL MUTEXES
 		mutable std::unique_ptr<std::mutex> globalmtx_;
 
 		mutable std::unique_ptr<std::timed_mutex> global_timedmtx_;
 
-		// VECTOR
-		std::atomic<uint64_t> maxSize_;
+		// MUTEX MAPS
+		std::unique_ptr<std::unordered_map<uint64_t, std::shared_ptr<std::mutex>>> mutex_map_;
 
-		std::atomic<uint64_t> size_;
+		std::unique_ptr<std::unordered_map<uint64_t, std::shared_ptr<std::timed_mutex>>> timed_mutex_map_;
+
+		/*
+			FUNCTIONS
+		*/
+
 		// HELPER FUNCTIONS
+
+		void init(uint64_t maxSize = UINT64_MAX, vc_t CONFIG = vc_t::NO_CONFIG);
 
 		inline constexpr bool isConfigured(vc_t CONFIG) const;
 
@@ -177,7 +197,8 @@ namespace datatype {
 
 		bool _POP_BACK_HELPER(uint64_t count = 1);
 
-		// OVERLOAD FUNCTIONS
+		// OVERLOAD HELPER FUNCTIONS
+
 		T& _SET_OPERATOR_(uint64_t index);
 
 		template <typename U = T>
@@ -197,7 +218,21 @@ namespace datatype {
 		template <typename U = T>
 		typename std::enable_if<!std::is_default_constructible<U>::value, const T&>::type
 			_GET_OPERATOR_FALLBACK() const;
+		
+		// LAZY INITIALIZATION FUNCTIONS
+		void lazyInitialization();
 
+		void initializeMutexes();
+
+		void initializeMutexMaps();
+
+		// GETTER FUNCTIONS
+
+		static MEMORYSTATUSEX getMemStatusEX();
+
+		inline std::vector<T>& vec();
+
+		T* data();
 	};
 };
 
