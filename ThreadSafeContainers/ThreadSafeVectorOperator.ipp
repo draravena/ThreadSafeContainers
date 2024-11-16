@@ -2,16 +2,14 @@
 
 #include "threadSafeVector.hpp"
 
-namespace datatype {
+namespace datatype {	
 	/*
 		EQUATING / [] == [] OPERATOR
-
 	*/
 	template <typename T>
 	bool ThreadSafeVector<T>::operator==(const ThreadSafeVector & other) const {
 		std::lock_guard<std::mutex> thisLock(this->globalmtx_);
 		std::lock_guard<std::mutex> otherLock(other.globalmtx_);
-
 		return this->vector_ == other.vector_;
 	}
 	/*
@@ -23,16 +21,16 @@ namespace datatype {
 		if (!(*this == other)) {
 			return false;
 		}
-		if (this->maxSize_ != other.maxSize_) {
+		if constexpr (this->maxSize_ != other.maxSize_) {
 			return false;
 		}
-		if (this->CONFIG_ != other.CONFIG_) {
+		if constexpr (this->CONFIG_ != other.CONFIG_) {
 			return false;
 		}
-		if (this->resizeable_ != other.resizeable_) {
+		if constexpr (this->resizeable_ != other.resizeable_) {
 			return false;
 		}
-		if (this->elementsPerMutex_ != other.elementsPerMutex_) {
+		if constexpr (this->elementsPerMutex_ != other.elementsPerMutex_) {
 			return false;
 		}
 		return true;
@@ -47,17 +45,46 @@ namespace datatype {
 
 	template <typename T>
 	const T& ThreadSafeVector<T>::_GET_OPERATOR_(uint64_t index) const {
+		if (CONFIG_ == vc_t::NO_CONFIG) {
+			if (isConfigured(vc_t::THROW_EXCEPTIONS)) {
+				throw std::runtime_error("Thread Safe Vector not configured.");
+			}
+			return _GET_OPERATOR_FALLBACK;
+		}
 		if (index >= maxSize_) {
-			throwException("Out of bounds. Larger than max size");
+			if (isConfigured(vc_t::THROW_EXCEPTIONS)) {
+				throw std::out_of_range("Index out of range. Exceeds max size.");
+			}
+			return _GET_OPERATOR_FALLBACK;
 		}
 		if (index >= vector_.size()) {
-			throwException("Out of bounds. Larger than vector size.");
+			if (isConfigured(vc_t::THROW_EXCEPTIONS)) {
+				throw std::out_of_range("Index out of range. Exceeds current size.");
+			}
+			return _GET_OPERATOR_FALLBACK;
 		}
 		// DANGEROUS
 		if (isConfigured(vc_t::DANGEROUS)) {
 			return vector_[index];
 		}
 	}
+
+	template <typename T>
+	template <typename U>
+	typename std::enable_if<std::is_default_constructible<U>::value, const T&>::type
+		ThreadSafeVector<T>::_GET_OPERATOR_FALLBACK() const {
+		T dummy;
+		return dummy;
+	}
+
+	template <typename T>
+	template <typename U>
+	typename std::enable_if<!std::is_default_constructible<U>::value, const T&>::type
+		ThreadSafeVector<T>::_GET_OPERATOR_FALLBACK() const {
+		int dummy = 0;
+		return dummy;
+	}
+
 	/*
 		SETTING / [] = T OPERATOR
 	*/
@@ -68,16 +95,42 @@ namespace datatype {
 
 	template <typename T>
 	T& ThreadSafeVector<T>::_SET_OPERATOR_(uint64_t index) {
+		if (CONFIG_ == vc_t::NO_CONFIG) {
+			if (isConfigured(vc_t::THROW_EXCEPTIONS)) {
+				throw std::runtime_error("Thread Safe Vector not configured.");
+			}
+			return _SET_OPERATOR_FALLBACK();
+		}
 		if (index >= maxSize_) {
-			throwException("Out of bounds. Larger than max size");
+			if (isConfigured(vc_t::THROW_EXCEPTIONS)) {
+				throw std::out_of_range("Index out of range. Exceeds max size.");
+			}
+			return _SET_OPERATOR_FALLBACK;
 		}
 		if (index >= vector_.size()) {
-			throwException("Out of bounds. Larger than vector size.");
+			if (isConfigured(vc_t::THROW_EXCEPTIONS)) {
+				throw std::out_of_range("Index out of range. Exceeds current size.");
+			}
+			return _SET_OPERATOR_FALLBACK;
 		}
-		_SET_OPERATOR_FALLBACK();
 		// DANGEROUS
 		if (isConfigured(vc_t::DANGEROUS)) {
 			return vector_[index];
 		}
+	}
+
+	template <typename T>
+	template <typename U>
+	typename std::enable_if<std::is_default_constructible<U>::value, T&>::type
+		ThreadSafeVector<T>::_SET_OPERATOR_FALLBACK() {
+		T dummy;
+		return dummy;
+	}
+	template <typename T>
+	template <typename U>
+	typename std::enable_if<!std::is_default_constructible<U>::value, T&>::type
+		ThreadSafeVector<T>::_SET_OPERATOR_FALLBACK() {
+		int dummy = 0;
+		return dummy;
 	}
 };
