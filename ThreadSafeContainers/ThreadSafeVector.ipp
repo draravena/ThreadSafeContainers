@@ -4,6 +4,11 @@
 #include <iostream> // debug
 
 namespace datatype {
+
+	/*
+		CONSTRUCTORS
+	*/
+
 	template <typename T>
 	ThreadSafeVector<T>::ThreadSafeVector(uint64_t maxSize, vc_t CONFIG) : resizeable_(false), CONFIG_(CONFIG) {
 		init(maxSize, CONFIG);
@@ -12,6 +17,11 @@ namespace datatype {
 	ThreadSafeVector<T>::ThreadSafeVector(vc_t CONFIG) : resizeable_(true) {
 		_PUSH_BACK_HELPER(2);
 	}
+
+	/*
+		CONSTRUCTOR HELPER
+	*/
+
 	template <typename T>
 	void ThreadSafeVector<T>::init(uint64_t maxSize, vc_t CONFIG) {
 		if constexpr (CONFIG & vc_t::RESERVE_MAX_SIZE) {
@@ -21,6 +31,10 @@ namespace datatype {
 			vector_.reserve(maxSize);
 		}
 	}
+
+	/*
+		VECTOR FUNCTIONS
+	*/
 
 	template <typename T>
 	bool ThreadSafeVector<T>::push_back(T& item) {
@@ -36,6 +50,22 @@ namespace datatype {
 	bool ThreadSafeVector<T>::pop_back(uint64_t count) {
 		return _POP_BACK_HELPER(count);
 	}
+
+	template <typename T>
+	void ThreadSafeVector<T>::clear() {
+		if (isConfigured(vc_t::DANGEROUS)) {
+			vector_.clear();
+			return;
+		}
+		// IMPLEMENT MUTEX TIMEOUT
+		std::lock_guard<std::mutex> lock(globalmtx_);
+		vector_.clear();
+		return;
+	}
+
+	/*
+		VECTOR FUNCTIONS HELPERS
+	*/
 
 	template <typename T>
 	bool ThreadSafeVector<T>::_PUSH_BACK_HELPER(T&& item) {
@@ -61,41 +91,18 @@ namespace datatype {
 		// IMPLEMENT MUTEX TIMEOUT
 	}
 
-	template <typename T>
-	void ThreadSafeVector<T>::clear() {
-		if (isConfigured(vc_t::DANGEROUS)) {
-			vector_.clear();
-			return;
-		}
-		// IMPLEMENT MUTEX TIMEOUT
-		std::lock_guard<std::mutex> lock(globalmtx_);
-		vector_.clear();
-		return;
-	}
-
-	template <typename T>
-	void ThreadSafeVector<T>::updateMutexMap() {
-		for (uint64_t i = 0; i < elementsPerMutex_ / maxSize_; i++) {
-
-		}
-	}
-
-	template <typename T>
-	std::vector<T>& ThreadSafeVector<T>::vec() {
-		if (isConfigured(vc_t::DANGEROUS)) {
-			return vector_;
-		}
-	}
-
-	template <typename T>
-	vc_t ThreadSafeVector<T>::getConfig() {
-		return CONFIG_;
-	}
+	/*
+		SETTER FUNCTIONS
+	*/
 
 	template <typename T>
 	void ThreadSafeVector<T>::setConfig(vc_t CONFIG) {
 		CONFIG_ = CONFIG;
 	}
+
+	/*
+		LAZY INITIALIZATION FUNCTIONS
+	*/
 
 	template <typename T>
 	void ThreadSafeVector<T>::lazyInitialization() {
@@ -116,7 +123,10 @@ namespace datatype {
 	void ThreadSafeVector<T>::initializeMutexMaps() {
 	}
 
-	// HELPER FUNCTIONS
+	/*
+		HELPER FUNCTIONS
+	*/
+
 	template <typename T>
 	inline uint64_t ThreadSafeVector<T>::getMutexMapKey(uint64_t index) {
 
@@ -130,17 +140,22 @@ namespace datatype {
 		return !(CONFIG & CONFIG_);
 	}
 
-	// GETTERS
+	/*
+		GETTER FUNCTIONS
+	*/
+
 	template <typename T>
 	uint64_t ThreadSafeVector<T>::getTotalRAM() {
 		MEMORYSTATUSEX msx = getMemStatusEX();
 		return msx.ullTotalPhys;
 	}
+
 	template <typename T>
 	uint64_t ThreadSafeVector<T>::getFreeRAM() {
 		MEMORYSTATUSEX msx = getMemStatusEX();
 		return msx.ullAvailPhys;
 	}
+
 	template <typename T>
 	MEMORYSTATUSEX ThreadSafeVector<T>::getMemStatusEX() {
 		MEMORYSTATUSEX memInfo;
@@ -148,24 +163,41 @@ namespace datatype {
 		GlobalMemoryStatusEx(&memInfo);
 		return memInfo;
 	}
+
 	template <typename T>
 	bool ThreadSafeVector<T>::resizeable() {
 		return resizeable_;
 	}
+
 	template <typename T>
 	uint64_t ThreadSafeVector<T>::size() {
 		return size_;
 	}
+
 	template <typename T>
 	uint64_t ThreadSafeVector<T>::maxSize() {
 		return maxSize_;
 	}
+
 	template <typename T>
 	uint64_t ThreadSafeVector<T>::remaining() {
 		return maxSize_ - size_;
 	}
+
 	template <typename T>
 	T* ThreadSafeVector<T>::data() {
 		return vector_.data();
+	}
+
+	template <typename T>
+	std::vector<T>& ThreadSafeVector<T>::vec() {
+		if (isConfigured(vc_t::DANGEROUS)) {
+			return vector_;
+		}
+	}
+
+	template <typename T>
+	vc_t ThreadSafeVector<T>::getConfig() {
+		return CONFIG_;
 	}
 };
