@@ -54,10 +54,10 @@ namespace datatype {
 		// DEBUG
 		ENABLE_STATS = 0x1000,
 		THROW_EXCEPTIONS = 0x2000
-		
-		
-		
-	} vc_t ;
+
+
+
+	} vc_t;
 
 	// Bitwise OR operator
 	constexpr bool operator&(vc_t lhs, vc_t rhs) {
@@ -67,7 +67,7 @@ namespace datatype {
 	constexpr vc_t operator|(vc_t lhs, vc_t rhs) {
 		return static_cast<vc_t>((static_cast<uint64_t>(lhs) | static_cast<uint64_t>(rhs)));
 	}
-	
+
 
 	template <typename T>
 	class ThreadSafeVector {
@@ -76,22 +76,22 @@ namespace datatype {
 		ThreadSafeVector(uint64_t maxSize = UINT64_MAX, vc_t CONFIG = vc_t::NO_CONFIG);
 		ThreadSafeVector(vc_t CONFIG = vc_t::NO_CONFIG);
 		// VECTOR FUNCTIONS
-		bool push_back(T&& item);           
-		bool push_back(T& item);             
-		bool pop_back(uint64_t count = 1);                    
-		int64_t append(ThreadSafeVector& destination, bool explicitAll = true, vc_t RESIZE_FLAG = vc_t::NO_CONFIG);    
+		bool push_back(T&& item);
+		bool push_back(T& item);
+		bool pop_back(uint64_t count = 1);
+		int64_t append(ThreadSafeVector& destination, bool explicitAll = true, vc_t RESIZE_FLAG = vc_t::NO_CONFIG);
 
 		void clear();
 
 		// OPERATOR OVERLOADS
 		using SimdType = typename
-		std::conditional<
-		std::is_same<T, int>::value, __m512i,
-		typename std::conditional<std::is_same<T, long>::value, __m512i,
-		typename std::conditional<std::is_same<T, short>::value, __m512i,
-		typename std::conditional<std::is_same<T, float>::value, __m512,
-		typename std::conditional<std::is_same<T, double>::value, __m512d,
-		void>::type>::type>::type>::type>::type;
+			std::conditional<
+			std::is_same<T, int>::value, __m512i,
+			typename std::conditional<std::is_same<T, long>::value, __m512i,
+			typename std::conditional<std::is_same<T, short>::value, __m512i,
+			typename std::conditional<std::is_same<T, float>::value, __m512,
+			typename std::conditional<std::is_same<T, double>::value, __m512d,
+			void>::type>::type>::type>::type>::type;
 
 		SimdType AVXRegister;
 
@@ -102,7 +102,7 @@ namespace datatype {
 		// AVX Increment (NOT IMPLEMENTED)
 		template <typename U = T>
 		typename std::enable_if<std::is_integral<U>::value, ThreadSafeVector<T>&>::type
-		operator++(int) {
+			operator++(int) {
 			std::lock_guard<std::mutex> lock(*(this->globalmtx_));
 			std::vector<T>& vec = this->vector_;
 			return *this;
@@ -119,12 +119,12 @@ namespace datatype {
 		// CONFIG GETTER FUNCTIONS
 		vc_t getConfig();
 		static uint64_t getTotalRAM();
-		static uint64_t getFreeRAM(); 
+		static uint64_t getFreeRAM();
 		std::vector<T> vector_;
 	private:
 		// CONFIG
-		std::atomic<vc_t> CONFIG_; 
-		
+		std::atomic<vc_t> CONFIG_;
+
 		bool resizeable_;
 
 		std::once_flag mutexesInitialized_;
@@ -140,7 +140,7 @@ namespace datatype {
 
 		static MEMORYSTATUSEX getMemStatusEX();
 
-		inline std::vector<T>& vec();       
+		inline std::vector<T>& vec();
 
 		void lazyInitialization();
 
@@ -182,7 +182,7 @@ namespace datatype {
 
 		template <typename U = T>
 		typename std::enable_if<std::is_default_constructible<U>::value, T&>::type
-		_SET_OPERATOR_FALLBACK();
+			_SET_OPERATOR_FALLBACK();
 
 		template <typename U = T>
 		typename std::enable_if<!std::is_default_constructible<U>::value, T&>::type
