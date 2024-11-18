@@ -10,12 +10,13 @@ namespace datatype {
 	*/
 
 	template <typename T>
-	ThreadSafeVector<T>::ThreadSafeVector(uint64_t maxSize, vc_t CONFIG) : resizeable_(false), CONFIG_(CONFIG) {
+	ThreadSafeVector<T>::ThreadSafeVector(uint64_t maxSize, const vc_t CONFIG) : resizeable_(false), CONFIG_(CONFIG) {
 		init(maxSize, CONFIG);
 	}
 	template <typename T>
-	ThreadSafeVector<T>::ThreadSafeVector(vc_t CONFIG) : resizeable_(true) {
-		_PUSH_BACK_HELPER(2);
+	ThreadSafeVector<T>::ThreadSafeVector(const vc_t CONFIG) : resizeable_(true) {
+		static_assert(!((CONFIG & vc_t::RESERVE_MAX_SIZE) == 1), "Cannot reserve memory for vector with no max size set."); // DOES NOT WORK
+		init(UINT64_MAX, CONFIG);
 	}
 
 	/*
@@ -23,8 +24,8 @@ namespace datatype {
 	*/
 
 	template <typename T>
-	void ThreadSafeVector<T>::init(uint64_t maxSize, vc_t CONFIG) {
-		if constexpr (CONFIG & vc_t::RESERVE_MAX_SIZE) {
+	void ThreadSafeVector<T>::init(uint64_t maxSize, const vc_t CONFIG) {
+		if (CONFIG & vc_t::RESERVE_MAX_SIZE) {
 			if (maxSize >= getTotalRAM()) {
 				throw std::runtime_error("Allocation size exceeds total memory.");
 			}
@@ -121,6 +122,9 @@ namespace datatype {
 
 	template <typename T>
 	void ThreadSafeVector<T>::initializeMutexMaps() {
+		if (isNOTConfigured(vc_t::ONLY_GLOBAL_MUTEX) && isNOTConfigured(vc_t::ENABLE_MUTEX_TIMEOUT_)) {
+			mutex_map_ = std::make_unique<std::unordered_map<std::uint64_t, std::shared_ptr<std::mutex>>>();
+		}
 	}
 
 	/*
