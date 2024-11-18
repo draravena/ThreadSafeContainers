@@ -57,11 +57,11 @@ namespace datatype {
 	} vc_t;
 
 	// Bitwise OR operator
-	constexpr bool operator&(vc_t lhs, vc_t rhs) {
+	constexpr bool operator&(const vc_t lhs, const vc_t rhs) {
 		return (static_cast<uint64_t>(lhs) & static_cast<uint64_t>(rhs));
 	}
 
-	constexpr vc_t operator|(vc_t lhs, vc_t rhs) {
+	constexpr vc_t operator|(const vc_t lhs, const vc_t rhs) {
 		return static_cast<vc_t>((static_cast<uint64_t>(lhs) | static_cast<uint64_t>(rhs)));
 	}
 
@@ -71,9 +71,9 @@ namespace datatype {
 	public:
 		// CONSTRUCTORS
 
-		ThreadSafeVector(uint64_t maxSize = UINT64_MAX, vc_t CONFIG = vc_t::NO_CONFIG);
+		ThreadSafeVector(uint64_t maxSize = UINT64_MAX, const vc_t CONFIG = vc_t::NO_CONFIG);
 
-		ThreadSafeVector(vc_t CONFIG = vc_t::NO_CONFIG);
+		ThreadSafeVector(const vc_t CONFIG = vc_t::NO_CONFIG);
 
 		// VECTOR OPERATIONS
 
@@ -185,7 +185,7 @@ namespace datatype {
 
 		// HELPER FUNCTIONS
 
-		void init(uint64_t maxSize = UINT64_MAX, vc_t CONFIG = vc_t::NO_CONFIG);
+		void init(uint64_t maxSize = UINT64_MAX, const vc_t CONFIG = vc_t::NO_CONFIG);
 
 		inline constexpr bool isConfigured(vc_t CONFIG) const;
 
